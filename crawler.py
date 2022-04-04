@@ -43,8 +43,13 @@ def download(sub_url, path):
     browser.get(sub_url[1])
 
     total = 0
-
+    index = 1
     last_result = read_page(browser.page_source)
+
+    if not last_result:
+        print('got an empty page, index = %d' % index)
+        return False
+
     for r in last_result:
         total += 1
         f.write(r)
@@ -60,6 +65,13 @@ def download(sub_url, path):
             sleep(2)
 
         result = read_page(browser.page_source)
+
+        if not last_result:
+            print('got an empty page, index = %d' % index)
+            return False
+        else:
+            index += 1
+
         if result != last_result:
             last_result = result
             for r in last_result:
@@ -112,7 +124,6 @@ if __name__ == '__main__':
     os.mkdir("crawler")
 
     sub_urls = read_sub_urls('https://data.eastmoney.com/bkzj/gn.html')
-
     for sub_url in sub_urls:
         if not os.path.exists('crawler\\' + sub_url[0]):
             os.mkdir('crawler\\' + sub_url[0])
