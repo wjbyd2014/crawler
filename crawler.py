@@ -44,6 +44,7 @@ def download(sub_url, path):
 
     total = 0
     index = 1
+    page_count = None
     last_result = read_page(browser.page_source)
 
     if not last_result:
@@ -58,15 +59,22 @@ def download(sub_url, path):
         element = browser.find_element(By.CLASS_NAME, "page-wrapper")
         try:
             button = element.find_element(By.CLASS_NAME, "next.paginate_button")
+            if not page_count:
+                page_count = 0
+                buttons = element.find_elements(By.CLASS_NAME, "paginate_button")
+                for button in buttons:
+                    data_index = button.get_attribute("data-index")
+                    if data_index:
+                        page_count = max(page_count, int(data_index))
         except:
             break
         else:
             browser.execute_script("$(arguments[0]).click()", button)
-            sleep(2)
+            sleep(0.5)
 
         result = read_page(browser.page_source)
 
-        if not last_result:
+        if not result:
             print('got an empty page, index = %d' % index)
             return False
         else:
@@ -78,7 +86,12 @@ def download(sub_url, path):
                 total += 1
                 f.write(r)
         else:
+            print('got an same page, index = %d' % index)
+            return False
+
+        if len(last_result) % 20 != 0 or page_count == index:
             break
+
     f.close()
     print("total = %d" % total)
     return total > 0
