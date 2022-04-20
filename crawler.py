@@ -32,10 +32,10 @@ def read_sub_urls(url):
             ret.append((type_, ref, strs[2][1:-4].replace('/', '')))
     return ret
 
-def download(sub_url, path):
-    print("downloading " + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2])
-    f = open(path + "\\result.txt", "w+")
-    f.write(sub_url[1] + '\n')
+def download(sub_url, path, num, total_num):
+    print("downloading (%d / %d)" % (num, total_num) + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2])
+    f = open(path + sub_url[0] + '.' + sub_url[2] + '.stock', "w+")
+    #f.write(sub_url[1] + '\n')
 
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
@@ -123,7 +123,7 @@ def read_page(page):
                     if (write_num % 2) == 1:
                         number = page[i1+1:i2]
                     else:
-                        ret.append(page[i1 + 1:i2] + ':' + number + '\n')
+                        ret.append(page[i1 + 1:i2] + ':' + number + ';')
                     write_num += 1
                 start = i2 + 1
             else:
@@ -137,15 +137,12 @@ if __name__ == '__main__':
     os.mkdir("crawler")
 
     sub_urls = read_sub_urls('https://data.eastmoney.com/bkzj/gn.html')
+
+    total_num = len(sub_urls)
+    num = 0
     for sub_url in sub_urls:
-        if not os.path.exists('crawler\\' + sub_url[0]):
-            os.mkdir('crawler\\' + sub_url[0])
-
-        path = 'crawler\\' + sub_url[0] + '\\' + sub_url[2]
-        if not os.path.exists(path):
-            os.mkdir(path)
-
+        num += 1
         retry = 0
-        while not download(sub_url, path):
+        while not download(sub_url, 'crawler\\', num, total_num):
             retry += 1
             print("download " + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2] + ' failed, retry = %d' % retry)
