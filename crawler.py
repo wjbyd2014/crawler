@@ -35,7 +35,6 @@ def read_sub_urls(url):
 def download(sub_url, path, num, total_num):
     print("downloading (%d / %d)" % (num, total_num) + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2])
     f = open(path + sub_url[0] + '.' + sub_url[2] + '.stock', "w+")
-    #f.write(sub_url[1] + '\n')
 
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
@@ -146,3 +145,4 @@ if __name__ == '__main__':
         while retry < 10 and not download(sub_url, 'crawler\\', num, total_num):
             retry += 1
             print("download " + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2] + ' failed, retry = %d' % retry)
+            os.unlink('crawler\\' + sub_url[0] + '.' + sub_url[2] + '.stock')
