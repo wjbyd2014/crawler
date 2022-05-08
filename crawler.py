@@ -70,7 +70,7 @@ def download(sub_url, path, num, total_num):
             break
         else:
             browser.execute_script("$(arguments[0]).click()", button)
-            sleep(0.5)
+            sleep(0.3)
 
         result = read_page(browser.page_source)
 
@@ -143,6 +143,6 @@ if __name__ == '__main__':
     for sub_url in sub_urls:
         num += 1
         retry = 0
-        while not download(sub_url, 'crawler\\', num, total_num):
+        while retry < 10 and not download(sub_url, 'crawler\\', num, total_num):
             retry += 1
             print("download " + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2] + ' failed, retry = %d' % retry)
