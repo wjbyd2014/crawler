@@ -8,8 +8,9 @@ from selenium.webdriver.chrome.service import DEFAULT_EXECUTABLE_PATH
 from selenium.webdriver.chrome.webdriver import DEFAULT_PORT
 from selenium.webdriver.common.by import By
 
+
 def read_sub_urls(url):
-    ret = []
+    ret_list = []
     str_html = requests.get(url)
 
     in_div = False
@@ -28,31 +29,28 @@ def read_sub_urls(url):
                 type_ = '行业资金'
             else:
                 type_ = '概念资金'
-            ref = 'http://quote.eastmoney.com/center/boardlist.html#boards2-90.%s' %  strs[1].split('/')[-1]
-            ret.append((type_, ref, strs[2][1:-4].replace('/', '')))
-    return ret
+            ref = 'http://quote.eastmoney.com/center/boardlist.html#boards2-90.%s' % strs[1].split('/')[-1]
+            ret_list.append((type_, ref, strs[2][1:-4].replace('/', '')))
+    return ret_list
 
-def download(sub_url, path, num, total_num):
+
+def download(sub_url, num, total_num):
     print("downloading (%d / %d)" % (num, total_num) + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2])
-    f = open(path + sub_url[0] + '.' + sub_url[2] + '.stock', "w+")
-
+    ret_list = list()
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
     browser = webdriver.Chrome(DEFAULT_EXECUTABLE_PATH, DEFAULT_PORT, options)
     browser.get(sub_url[1])
 
-    total = 0
-    index = 1
     page_count = None
     last_result = read_page(browser.page_source)
-
+    index = 1
     if not last_result:
         print('got an empty page, index = %d' % index)
-        return False
+        return None
 
-    for r in last_result:
-        total += 1
-        f.write(r)
+    for res in last_result:
+        ret_list.append(res)
 
     while True:
         element = browser.find_element(By.CLASS_NAME, "page-wrapper")
@@ -72,31 +70,27 @@ def download(sub_url, path, num, total_num):
             sleep(0.3)
 
         result = read_page(browser.page_source)
-
+        index += 1
         if not result:
             print('got an empty page, index = %d' % index)
-            return False
-        else:
-            index += 1
+            return None
 
         if result != last_result:
             last_result = result
-            for r in last_result:
-                total += 1
-                f.write(r)
+            for res in last_result:
+                ret_list.append(res)
         else:
-            print('got an same page, index = %d' % index)
-            return False
+            print('got a same page, index = %d' % index)
+            return None
 
         if len(last_result) % 20 != 0 or page_count == index:
             break
 
-    f.close()
-    print("total = %d" % total)
-    return total > 0
+    return ret_list
+
 
 def read_page(page):
-    ret = []
+    ret_list = []
     start = None
     write_num = 1
     while True:
@@ -120,15 +114,23 @@ def read_page(page):
             if i1 > 0 and i2 > 0:
                 if i2 - i1 > 1:
                     if (write_num % 2) == 1:
-                        number = page[i1+1:i2]
+                        number = page[i1 + 1:i2]
                     else:
-                        ret.append(page[i1 + 1:i2] + ':' + number + ';')
+                        ret_list.append(page[i1 + 1:i2] + ':' + number + ';')
                     write_num += 1
                 start = i2 + 1
             else:
                 print("parse html error")
                 break
-    return ret
+    return ret_list
+
+
+def store(path, bkType, bkName, stockList):
+    print(len(stockList))
+    f = open(path + bkType + '.' + bkName + '.stock', "w+")
+    for stock in stockList:
+        f.write(stock)
+    f.close()
 
 if __name__ == '__main__':
     if os.path.exists("crawler"):
@@ -142,7 +144,11 @@ if __name__ == '__main__':
     for sub_url in sub_urls:
         num += 1
         retry = 0
-        while retry < 10 and not download(sub_url, 'crawler\\', num, total_num):
-            retry += 1
-            print("download " + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2] + ' failed, retry = %d' % retry)
-            os.unlink('crawler\\' + sub_url[0] + '.' + sub_url[2] + '.stock')
+        while retry < 16:
+            ret = download(sub_url, num, total_num)
+            if not ret:
+                retry += 1
+                print("download " + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2] + ' failed, retry = %d' % retry)
+            else:
+                store('crawler\\', sub_url[0], sub_url[2], ret)
+                break
