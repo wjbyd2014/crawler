@@ -36,6 +36,7 @@ def read_sub_urls(url):
 
 def download(sub_url, num, total_num):
     print("downloading (%d / %d)" % (num, total_num) + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2])
+
     ret_list = list()
     options = webdriver.ChromeOptions()
     options.add_argument('headless')
@@ -132,6 +133,7 @@ def store(path, bkType, bkName, stockList):
         f.write(stock)
     f.close()
 
+
 if __name__ == '__main__':
     if os.path.exists("crawler"):
         shutil.rmtree("crawler")
@@ -142,6 +144,9 @@ if __name__ == '__main__':
     total_num = len(sub_urls)
     num = 0
     for sub_url in sub_urls:
+        if sub_url[2].find('ST') != -1 or sub_url[2].find('昨日') != -1:
+            continue
+
         num += 1
         retry = 0
         while retry < 16:
