@@ -34,17 +34,16 @@ def read_sub_urls(url):
     return ret_list
 
 
-def download(sub_url, num, total_num):
+def download(sub_url, num, total_num, browser):
     print("downloading (%d / %d)" % (num, total_num) + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2])
 
     ret_list = list()
-    options = webdriver.ChromeOptions()
-    options.add_argument('headless')
-    browser = webdriver.Chrome(DEFAULT_EXECUTABLE_PATH, DEFAULT_PORT, options)
     browser.get(sub_url[1])
 
     page_count = None
+    browser.refresh()
     last_result = read_page(browser.page_source)
+
     index = 1
     if not last_result:
         print('got an empty page, index = %d' % index)
@@ -135,11 +134,16 @@ def store(path, bkType, bkName, stockList):
 
 
 if __name__ == '__main__':
-    if os.path.exists("crawler"):
-        shutil.rmtree("crawler")
-    os.mkdir("crawler")
+    dir_name = "crawler"
+    if os.path.exists(dir_name):
+        shutil.rmtree(dir_name)
+    os.mkdir(dir_name)
 
     sub_urls = read_sub_urls('https://data.eastmoney.com/bkzj/gn.html')
+
+    options = webdriver.ChromeOptions()
+    options.add_argument('headless')
+    browser = webdriver.Chrome(DEFAULT_EXECUTABLE_PATH, DEFAULT_PORT, options)
 
     total_num = len(sub_urls)
     num = 0
@@ -150,10 +154,10 @@ if __name__ == '__main__':
         num += 1
         retry = 0
         while retry < 16:
-            ret = download(sub_url, num, total_num)
+            ret = download(sub_url, num, total_num, browser)
             if not ret:
                 retry += 1
                 print("download " + sub_url[0] + ' ' + sub_url[1] + ' ' + sub_url[2] + ' failed, retry = %d' % retry)
             else:
-                store('crawler\\', sub_url[0], sub_url[2], ret)
+                store(dir_name + '\\', sub_url[0], sub_url[2], ret)
                 break
