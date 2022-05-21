@@ -1,5 +1,6 @@
 # coding=utf-8
 import shutil
+from datetime import datetime
 from time import sleep
 import requests
 import os
@@ -134,6 +135,7 @@ def store(path, bkType, bkName, stockList):
 
 
 if __name__ == '__main__':
+    begin_time = datetime.now()
     dir_name = "crawler"
     if os.path.exists(dir_name):
         shutil.rmtree(dir_name)
@@ -161,3 +163,6 @@ if __name__ == '__main__':
             else:
                 store(dir_name + '\\', sub_url[0], sub_url[2], ret)
                 break
+    end_time = datetime.now()
+    print('开始时间:', begin_time)
+    print('结束时间:', end_time)
